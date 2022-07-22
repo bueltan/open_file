@@ -4,16 +4,12 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.provider.Settings;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -98,10 +94,10 @@ public class OpenFilePlugin implements MethodCallHandler
             }
             if (pathRequiresPermission()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    if(!isFileAvailable()){
+                    if (isFileAvailable()) {
                         return;
                     }
-                    if (!isMediaStorePath()&&!Environment.isExternalStorageManager()) {
+                    if (!isMediaStorePath() && !Environment.isExternalStorageManager()) {
                         result(-3, "Permission denied: android.Manifest.permission.MANAGE_EXTERNAL_STORAGE");
                         return;
                     }
@@ -124,18 +120,18 @@ public class OpenFilePlugin implements MethodCallHandler
         }
     }
 
-    private boolean isMediaStorePath(){
+    private boolean isMediaStorePath() {
         boolean isMediaStorePath = false;
         String[] mediaStorePath = {"/DCIM/"
-                ,"/Pictures/"
-                ,"/Movies/"
-                ,"/Alarms/"
-                ,"/Audiobooks/"
-                ,"/Music/"
-                ,"/Notifications/"
-                ,"/Podcasts/"
-                ,"/Ringtones/"
-                ,"/Download/"};
+                , "/Pictures/"
+                , "/Movies/"
+                , "/Alarms/"
+                , "/Audiobooks/"
+                , "/Music/"
+                , "/Notifications/"
+                , "/Podcasts/"
+                , "/Ringtones/"
+                , "/Download/"};
         for (String s : mediaStorePath) {
             if (filePath.contains(s)) {
                 isMediaStorePath = true;
@@ -160,22 +156,22 @@ public class OpenFilePlugin implements MethodCallHandler
         }
     }
 
-    private boolean isFileAvailable(){
+    private boolean isFileAvailable() {
         if (filePath == null) {
             result(-4, "the file path cannot be null");
-            return false;
+            return true;
         }
 
         File file = new File(filePath);
         if (!file.exists()) {
             result(-2, "the " + filePath + " file does not exists");
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private void startActivity() {
-        if(!isFileAvailable()){
+        if (isFileAvailable()) {
             return;
         }
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -384,7 +380,7 @@ public class OpenFilePlugin implements MethodCallHandler
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
-    public boolean onRequestPermissionsResult(int requestCode, String[] strings, int[] grantResults) {
+    public boolean onRequestPermissionsResult(int requestCode, @NonNull String[] strings, @NonNull int[] grantResults) {
         if (requestCode != REQUEST_CODE) return false;
         if (hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                 && TYPE_STRING_APK.equals(typeString)) {
@@ -441,6 +437,7 @@ public class OpenFilePlugin implements MethodCallHandler
 
     @Override
     public void onAttachedToActivity(ActivityPluginBinding binding) {
+        assert flutterPluginBinding != null;
         channel =
                 new MethodChannel(
                         flutterPluginBinding.getBinaryMessenger(), "open_file");
